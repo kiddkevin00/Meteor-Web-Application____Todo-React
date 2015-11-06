@@ -8,7 +8,7 @@ App = React.createClass({
     if (this.state.hideCompleted) query = {checked: {$ne: true}};
 
     return {
-      tasks: Tasks.find(query, {sort: {createdAt: -1}}).fetch(),
+      tasks: Tasks.find(query, {sort: {createdAt: 1}}).fetch(),
       incompleteCount: Tasks.find({checked: {$ne: true}}).count(),
       currentUser: Meteor.user()
     };
@@ -56,7 +56,13 @@ App = React.createClass({
 
   renderTasks() {
     return this.data.tasks.map((task) => {
-      return <Task key={task._id} task={task} />;
+      const currentUserId = this.data.currentUser && this.data.currentUser._id;
+      const isPrivateButtonShown = (currentUserId === task.owner);
+      return <Task
+        key={task._id}
+        task={task}
+        isPrivateButtonShown={isPrivateButtonShown}
+        />;
     });
   },
   handleSubmit(event) {
@@ -66,12 +72,7 @@ App = React.createClass({
     // Find the text field via the React ref
     var text = React.findDOMNode(this.refs.textInput).value.trim();
     if (text) {
-      Tasks.insert({
-        owner: Meteor.userId(), // `_id` attribute of logged in user
-        username: Meteor.user().username,
-        text: text,
-        createdAt: new Date()
-      });
+      Meteor.call('addTask', text);
     } else {
       alert('Invalid input. Please try again!');
     }

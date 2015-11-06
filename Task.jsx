@@ -4,19 +4,33 @@ Task = class extends React.Component {
     super();
     this.toggleChecked = this.toggleChecked.bind(this);
     this.deleteThisTask = this.deleteThisTask.bind(this);
+    this.togglePrivate = this.togglePrivate.bind(this);
   }
 
   render() {
-    const taskClassName = this.props.task.checked ? 'checked' : '';
+    const taskClassName = (this.props.task.checked ? 'checked' : '') + ' ' +
+      (this.props.task.private ? 'private' : '');
     return (
       <li className={taskClassName}>
-        <button className='delete' onClick={this.deleteThisTask}>&times;</button>
+        <button className='delete'
+                onClick={this.deleteThisTask}>
+          &times;
+        </button>
         <input
           type='checkbox'
           readOnly={true}
           checked={this.props.task.checked}
           onClick={this.toggleChecked}
           />
+
+        {this.props.isPrivateButtonShown ? (
+          <button
+            className='toggle-private'
+            onClick={this.togglePrivate}>
+            {this.props.task.private ? 'Private' : 'Public'}
+          </button>
+        ) : null}
+
         <span className='text'>
          <strong>{this.props.task.username || 'N/A'}</strong>
           : {this.props.task.text}
@@ -27,17 +41,19 @@ Task = class extends React.Component {
 
   toggleChecked() {
     // Set the checked property to the opposite of its current value
-    Tasks.update(this.props.task._id, {
-      $set: {
-        checked: !this.props.task.checked
-      }
-    });
+    Meteor.call('setChecked', this.props.task._id, !this.props.task.checked);
   }
 
   deleteThisTask() {
-    Tasks.remove(this.props.task._id);
+    Meteor.call('removeTask', this.props.task._id);
   }
+
+  togglePrivate() {
+    Meteor.call('setPrivate', this.props.task._id, !this.props.task.private);
+  }
+
 };
 Task.propTypes = {
-  task: React.PropTypes.object.isRequired
+  task: React.PropTypes.object.isRequired,
+  isPrivateButtonShown: React.PropTypes.bool.isRequired
 };
